@@ -9,8 +9,8 @@ The goal of these lectures is to introduce the great R-universe, and especially 
 
 ## Contents
 
-* [`r-best-practices`](./lecture_01-r_best_practices/r_best_practices.qmd) [🎥 slides](https://luca.quarto.pub/r_best_practices/#/r-best-practices). This lecture will introduce some of the most important software engineering practices when working with R (which could extend to any other programming language).
-* [`into-the-tidyverse`](./lecture_02-dive_into_the_tidyverse/2022_11_15_tidy_tuesday.qmd). This lecture will introduce the `{tidyverse}` through Dave Robinsons' screencasts of the TidyTuesday data challenges.
+* [`r-best-practices`](./lecture_01/r_best_practices.qmd)(https://luca.quarto.pub/r_best_practices/#/r-best-practices). This lecture will introduce some of the most important software engineering practices when working with R (which could extend to any other programming language).
+* [`into-the-tidyverse`](./lecture_02/into_the_tidyverse.qmd). This lecture will introduce the `{tidyverse}` through Dave Robinsons' screencasts of the TidyTuesday data challenges.
 
 ## References
 
