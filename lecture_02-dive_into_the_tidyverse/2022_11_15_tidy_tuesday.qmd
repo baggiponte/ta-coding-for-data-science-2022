@@ -1,0 +1,199 @@
+---
+title: "TidyTemplate"
+date: 2022-11-16
+output: html_document
+execute: 
+  cache: true
+---
+
+# What's `TidyTuesday`?
+
+> Join the R4DS Online Learning Community in the weekly #TidyTuesday event!
+Every week we post a raw dataset, a chart or article related to that dataset, and ask you to explore the data.
+While the dataset will be “tamed”, it will not always be tidy! As such you might need to apply various R for Data Science techniques to wrangle the data into a true tidy format.
+The goal of TidyTuesday is to apply your R skills, get feedback, explore other’s work, and connect with the greater #RStats community!
+As such we encourage everyone of all skills to participate!
+
+## Set up the notebook options
+
+```{r setup}
+#| include: FALSE
+
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(tidytuesdayR)
+library(scales)
+
+theme_set(theme_minimal())
+```
+
+# Load the Data
+
+```{r load-data}
+base_url <- "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-11-15"
+
+image_alt <- readr::read_csv(glue::glue("{base_url}/image_alt.csv"))
+color_contrast <- readr::read_csv(glue::glue("{base_url}/color_contrast.csv"))
+ally_scores <- readr::read_csv(glue::glue("{base_url}/ally_scores.csv"))
+bytes_total <- readr::read_csv(glue::glue("{base_url}/bytes_total.csv"))
+speed_index <- readr::read_csv(glue::glue("{base_url}/speed_index.csv"))
+```
+
+First trick: instead of copy-pasting the URL everywhere, we used the `{glue}` package
+to combine the strings. This is reminiscent of `f-strings` in Python.
+
+Let's start by inspecting the `speed_index`:
+
+```{r speed}
+speed_index |>
+  select(timestamp) |>
+  head()
+```
+
+* We used the `|>` pipe operator. This is the `native pipe`, available since `R>=4.1`. You can also use `{magrittr}`'s `%>%` too!
+* Then we used the `select()` function to extract one column only.
+
+The timestamp is recorded as milliseconds from the epoch (January first, 1970).
+
+```{r}
+speed_index |>
+  mutate(
+    date = as.POSIXct(timestamp / 1000, origin = lubridate::origin, tz = "UTC")
+    ) |>
+  select(date) |>
+  head()
+```
+
+* We used `mutate()` to create a new column, but we could have used it to modify
+the column in place.
+* We transformed the `timestamp` into a date; however we already have such a column!
+
+Let's write a function to apply to our dataset:
+
+```{r}
+prep_data <- . %>%
+  select(-timestamp) %>%
+  mutate(date = lubridate::ymd(date))
+```
+
+This is a sort of `anonymous function` (see the `.`): for it to work, we must use
+`{magrittr}`'s pipe:
+
+:::callout
+try replacing the `%>%` with `|>` and see what happens
+:::
+
+```{r}
+ally_scores <- readr::read_csv(glue::glue("{base_url}/ally_scores.csv")) |> prep_data()
+bytes_total <- readr::read_csv(glue::glue("{base_url}/bytes_total.csv")) |> prep_data()
+speed_index <- readr::read_csv(glue::glue("{base_url}/speed_index.csv")) |> prep_data()
+image_alt <- readr::read_csv(glue::glue("{base_url}/image_alt.csv")) |> prep_data()
+color_contrast <- readr::read_csv(glue::glue("{base_url}/color_contrast.csv")) |> prep_data()
+```
+
+```{r}
+speed_index %>% head()
+```
+
+# Data Exploration with Percentiles
+
+```{r}
+speed_index %>%
+  ggplot(aes(date, p50, color=client)) +
+  geom_line() +
+  geom_ribbon(aes(ymin=p25, ymax=p75), alpha=0.2) +
+  labs(
+    title="Speed by Client",
+  ) +
+  theme(plot.title.position = 'plot')
+```
+
+```{r}
+ribbon_plot <- function(data, title) {
+  data %>% 
+    ggplot(aes(date, p50, color= client, fill=client)) +
+    geom_line() +
+    geom_ribbon(aes(ymin=p25, ymax=p75), alpha=0.2) +
+    labs(
+      title=title,
+      subtitle="25th and 75th percentile by Client",
+      y="",
+    ) +
+    theme(plot.title.position = 'plot')
+} 
+  
+ally_scores %>% ribbon_plot(title="Accessibility Scores")
+
+bytes_total %>% ribbon_plot(title="Total bytes")
+```
+
+# Percentage Measures
+
+```{r}
+image_alt %>%
+  ggplot(aes(date, percent, color=client)) +
+  geom_line()
+
+color_contrast %>%
+  ggplot(aes(date, percent, color=client)) +
+  geom_line()
+```
+
+## Other visualisations
+
+```{r}
+image_alt %>%
+  ggplot(aes(percent, fill=client)) +
+  geom_density(color="white", alpha=0.3)
+
+image_alt %>%
+  ggplot(aes(percent, color=client)) +
+  geom_histogram(aes(fill=client), color="white", alpha=0.3)
+```
+
+# More sophisticated manipulations
+
+```{r}
+combined_percentiles <- bind_rows(speed_index, bytes_total, ally_scores)
+
+combined_percentiles %>% head()
+```
+
+```{r}
+combined_percentiles %>% count(measure)
+```
+
+```{r}
+combined_percentiles %>% 
+  ggplot(aes(date, p50, fill=client, color=client)) +
+  geom_line() +
+  geom_ribbon(aes(ymin=p25, ymax=p50), alpha=0.2) +
+  facet_wrap(~ measure, scales="free") +
+  labs(
+      title="Speed, Bytes and Accessibility",
+      subtitle="25th and 75th percentile by Client",
+      y="",
+    ) +
+  theme(plot.title.position = 'plot')
+```
+
+```{r}
+bind_rows(image_alt, color_contrast) %>% 
+  ggplot(aes(percent)) +
+  geom_density(aes(fill=client), alpha=0.3, color="white") +
+  facet_wrap(~ measure, scales="free") +
+  scale_y_continuous(labels= percent_format()) +
+  labs(
+    title="**Accessibility: Alt Text and Color Contrast**",
+    subtitle="*Percentage by client*",
+    y="",
+    ) +
+  ggExtra::removeGrid() +
+  theme(
+    plot.title.position = 'plot',
+    plot.title = ggtext::element_markdown(),
+    plot.subtitle = ggtext::element_markdown(),
+  )
+```
+
