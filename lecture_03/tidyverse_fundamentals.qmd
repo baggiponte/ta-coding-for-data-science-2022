@@ -1,0 +1,226 @@
+---
+title: "Intro to the Tidyverse"
+output: html_document
+execute: 
+  cache: true
+---
+
+# Tidyverse fundamentals: `{ggplot}`
+
+```{r setup}
+#| include: FALSE
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+theme_set(theme_minimal())
+```
+
+## Inspect the data
+
+Let's see a pre-built dataset:
+
+```{r load-mpg}
+mpg
+# if you want to inspect the data:
+# ?mpg
+```
+
+## Bare plot syntax
+
+Then we create a simple plot:
+
+```{r simple-plot}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+`mapping` is a special argument: combined with the `aes()` function, it *maps variables in the data to plotting elements*. We can also pass other arguments to `mapping`:
+
+```{r more-aes-mappings}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, colour = class))
+```
+
+Some other arguments we can use:
+
+- `size` (not recommended for quantitative variables).
+- `alpha`, i.e. transparency.
+* `shape`
+
+![shapes](http://sape.inf.usi.ch/sites/default/files/ggplot2-shape-identity.png)
+
+You can see the [docs](https://ggplot2.tidyverse.org/reference/aes_linetype_size_shape.html) for a complete reference.
+
+We can also pass these very same arguments **outside** of the `mapping` argument, to define behaviours that are independent of the data:
+
+```{r more-aes-arguments}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy), colour="blue", alpha=0.8, shape=1)
+```
+
+We can use `{magrittr}`'s pipe operator (`%>%`) or the native-pipe (`|>`) to pass the data as an argument:
+
+```{r using-pipes}
+mpg %>%
+  ggplot() +
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+mpg |> 
+  ggplot() +
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+### The `mapping` argument
+
+We can also specify the `mapping` argument inside the `ggplot` call:
+
+```{r mapping-argument}
+mpg %>%
+  ggplot(mapping = aes(x = displ, y = hwy)) +
+  geom_point()
+```
+
+The aestethics specified in this way will be inherited by default in every subsequent `geom_*` (geometry). We can always override them in the `geom_*` function.
+
+## Facets
+
+the `facet_wrap()` "layer" can be used to split the plot in different *facets*.
+
+> The first argument of `facet_wrap()` should be a formula, which you create with `~` followed by a variable name (here “formula” is the name of a data structure in R, not a synonym for “equation”). The variable that you pass to `facet_wrap()` should be discrete.
+
+```{r facet-wrap}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_wrap(~ class, nrow = 2)
+```
+
+You can also create a grid, to facet the plot on the combination of two variables:
+
+```{r facet-grid}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_grid(drv ~ cyl)
+```
+
+## Geoms
+
+The `geom` attribute describes the *data representation*. Here we use a small extension package to display side by side two plot objects:
+
+```{r geoms}
+library(patchwork)
+
+p1 <- ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  labs(title = "Scatterplot") + 
+  theme(plot.title.position = "plot")
+
+p2 <- ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy)) +
+  labs(title = "Smooth Regression Line") +
+  theme(plot.title.position = "plot")
+
+p1 | p2
+```
+
+As said above, the `geom`s can take a `mapping` argument. However, not all arguments can be used in every `geom`: for example, the `shape` argument cannot be passed to a `geom_line()`.
+
+Sometimes it's much better to combine mappings to make your visualisations much simpler to grasp:
+
+```{r combine-mappings}
+p2a <- ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy, group = drv)) +
+  labs(
+    title = "Smooth Regression Line",
+    subtitle = "By type of drive train (no color)"
+  ) +
+  theme(plot.title.position = "plot")
+    
+p2b <- ggplot(data = mpg) +
+  geom_smooth(
+    mapping = aes(x = displ, y = hwy, color = drv),
+    show.legend = FALSE
+  ) +
+  labs(
+    title = "Smooth Regression Line",
+    subtitle = "By type of drive train (with color)"
+    ) +
+  theme(plot.title.position = "plot")
+
+p2a | p2b
+```
+
+We can also layer them:
+
+```{r}
+mpg %>% 
+  ggplot(mapping = aes(x = displ, y = hwy)) + 
+  geom_point() +
+  geom_smooth() +
+  labs(
+    title = "Smooth Regression Line + Scatterplot",
+    ) +
+  theme(plot.title.position = "plot")
+```
+
+In this case, setting a "global" mapping can help remove code duplication. We can still set custom aesthetics for each layer:
+
+```{r}
+mpg %>% 
+  ggplot(mapping = aes(x = displ, y = hwy)) + 
+  geom_point(aes(color=class)) +
+  geom_smooth() +
+  labs(
+    title = "Smooth Regression Line + Scatterplot",
+    ) +
+  theme(plot.title.position = "plot")
+```
+
+We can also change the **data** in each layer:
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth(data = mpg %>% filter(class == "subcompact"), se = FALSE) +
+  labs(
+    title = "Smooth regression line + scatterplot",
+    subtitle = "Smooth line fitted only on `class == 'subcompact'`"
+  ) +
+  theme(plot.title.position = "plot")
+```
+
+## Extensions to `{ggplot}`
+
+`{ggplot}` is so influential and versatile that many packages were written to extend its functionalities, or wrap them to build more advanced visualisations. You can see a list [here](https://exts.ggplot2.tidyverse.org/gallery/).
+
+### Visualise Models
+
+* The `{parameters}` and `{see}` packages are part of the `{easystats}` framework, to make statistical plotting and modelling easier.
+* The `{ggsci}` package implements themes specific to some [publication journals](https://nanx.me/ggsci/articles/ggsci.html).
+
+```{r}
+library(parameters)
+library(see)
+
+mpg %>%
+  # turn columns into factors
+  mutate(across(where(is.character), as_factor)) %>% 
+  # fit a regression model
+  lm(hwy ~ manufacturer + year + cyl + fl + class, data = .) %>% 
+  parameters() %>% 
+  plot() +
+  ggplot2::labs(title = "A Dot-and-Whisker Plot") + 
+  ggsci::scale_color_npg()
+```
+
+They can also be quite sophisticated, such as `{ggstatsplot}`:
+
+```{r}
+ggstatsplot::ggbetweenstats(
+  data  = iris,
+  x     = Species,
+  y     = Sepal.Length,
+  title = "Distribution of sepal length across Iris species"
+)
+```
+
