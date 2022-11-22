@@ -1,6 +1,5 @@
 ---
-title: "TidyTemplate"
-date: 2022-11-16
+title: "Intro to the Tidyverse"
 output: html_document
 execute: 
   cache: true
