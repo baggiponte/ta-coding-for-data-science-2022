@@ -1,11 +1,9 @@
 ---
-title: "Intro to the Tidyverse"
+title: "Tidyverse Fundamentals: `{ggplot}`"
 output: html_document
 execute: 
   cache: true
 ---
-
-# Tidyverse fundamentals: `{ggplot}`
 
 ```{r setup}
 #| include: FALSE
@@ -16,7 +14,7 @@ library(tidyverse)
 theme_set(theme_minimal())
 ```
 
-## Inspect the data
+# Inspect the data
 
 Let's see a pre-built dataset:
 
@@ -26,7 +24,7 @@ mpg
 # ?mpg
 ```
 
-## Bare plot syntax
+# Bare plot syntax
 
 Then we create a simple plot:
 
@@ -71,7 +69,7 @@ mpg |>
   geom_point(mapping = aes(x = displ, y = hwy))
 ```
 
-### The `mapping` argument
+## The `mapping` argument
 
 We can also specify the `mapping` argument inside the `ggplot` call:
 
@@ -83,7 +81,7 @@ mpg %>%
 
 The aestethics specified in this way will be inherited by default in every subsequent `geom_*` (geometry). We can always override them in the `geom_*` function.
 
-## Facets
+# Facets
 
 the `facet_wrap()` "layer" can be used to split the plot in different *facets*.
 
@@ -103,7 +101,7 @@ ggplot(data = mpg) +
   facet_grid(drv ~ cyl)
 ```
 
-## Geoms
+# Geoms
 
 The `geom` attribute describes the *data representation*. Here we use a small extension package to display side by side two plot objects:
 
@@ -189,11 +187,11 @@ ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
   theme(plot.title.position = "plot")
 ```
 
-## Extensions to `{ggplot}`
+# Extensions to `{ggplot}`
 
 `{ggplot}` is so influential and versatile that many packages were written to extend its functionalities, or wrap them to build more advanced visualisations. You can see a list [here](https://exts.ggplot2.tidyverse.org/gallery/).
 
-### Visualise Models
+## Visualise Models
 
 * The `{parameters}` and `{see}` packages are part of the `{easystats}` framework, to make statistical plotting and modelling easier.
 * The `{ggsci}` package implements themes specific to some [publication journals](https://nanx.me/ggsci/articles/ggsci.html).

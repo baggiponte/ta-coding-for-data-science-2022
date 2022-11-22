@@ -1,0 +1,12 @@
+- source: tidyverse_fundamentals.qmd
+  quarto-pub:
+    - id: bd27aaa2-3f09-41c1-b0fb-d4ac3adfb470
+      url: 'https://quartopub.com/sites/luca/ggplot-fundamentals'
+- source: ggplot_fundamentals.qmd
+  quarto-pub:
+    - id: 8e856a86-8f78-4645-bd5c-c8eb7049c57a
+      url: 'https://quartopub.com/sites/luca/tidyverse-fundamentals-ggplot'
+- source: tidyverse_fundamentals_ggplot.qmd
+  quarto-pub:
+    - id: 7c58b19a-9eb0-4159-992f-0728fb929854
+      url: 'https://quartopub.com/sites/luca/tidyverse-fundamentals-ggplot'

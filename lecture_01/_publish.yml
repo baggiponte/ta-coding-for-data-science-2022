@@ -1,4 +1,4 @@
 - source: r_best_practices.qmd
   quarto-pub:
     - id: 0f6738df-f07f-46f0-8d46-c8a707c0a202
-      url: 'https://quartopub.com/sites/luca/r_best_practices'
+      url: 'https://quartopub.com/sites/luca/r-best-practices'

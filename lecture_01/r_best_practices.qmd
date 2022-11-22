@@ -1,16 +1,24 @@
 ---
+title: "💯 R Best Practices"
+subtitle: How to set up a reproducible and collaborative workflow
+title-slide-attributes:
+  data-background-color: "lightblue"
+footer: UniMi • [Coding for Data Science and Data Management](https://www.unimi.it/en/education/degree-programme-courses/2023/coding-data-science-and-data-management) • AY 2022/2023 
 format:
   revealjs:
     theme: simple 
     incremental: true
 ---
 
-# 💯 R Best Practices {background-color="lightblue"}
-How to set up a reproducible and collaborative workflow
+# Index
 
-::: footer
-UniMi • Coding for Data Science and Data Management • AY 2022/2023
-:::
+## 🚧 Project Configuration 
+
+## ✨Tips and Tricks
+
+## ♻️ Reproducible Workflow
+
+## 🌐Follow Standards 
 
 # 🚧 Project Configuration 
 Code smells, projects and scaffolding
@@ -108,7 +116,7 @@ This effectively means that you have to re-run your code! But you can also use c
 ## 🚧 Project Configuration
 ### ✔️ Use `{here}`
 
-```{.r}
+```{.r code-line-numbers="2|5|10"}
 library(ggplot2)
 library(here)
 
