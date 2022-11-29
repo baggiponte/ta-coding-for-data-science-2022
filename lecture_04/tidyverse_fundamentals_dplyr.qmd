@@ -1,0 +1,269 @@
+---
+title: "Tidyverse Fundamentals: `{dplyr}`"
+format: html
+cache: true
+---
+
+# Setup 
+
+```{r setup}
+#| include: FALSE
+knitr::opts_chunk$set(echo = TRUE)
+
+library(nycflights13)
+library(tidyverse)
+
+theme_set(theme_minimal())
+```
+
+# A tibble
+
+```{r load-data}
+flights
+```
+
+You might also have noticed the row of three (or four) letter abbreviations under the column names. These describe the type of each variable:
+
+* `int` stands for integers.
+* `dbl` stands for doubles, or real numbers.
+* `chr` stands for character vectors, or strings.
+* `dttm` stands for date-times (a date + a time).
+
+There are three other common types of variables that aren’t used in this dataset but you’ll encounter later in the book:
+
+* `lgl` stands for logical, vectors that contain only TRUE or FALSE.
+* `fctr` stands for factors, which R uses to represent categorical variables with fixed possible values.
+* `date` stands for dates.
+
+# First basic `{dplyr}` verbs
+
+## filter
+
+```{r}
+filter(flights, month == 1, day == 1)
+```
+
+For simplicity, we can use the `%>%` (pipe) operator:
+
+```{r}
+flights %>% filter(month == 11 | month == 12)
+
+flights %>% filter(month %in% c(11, 12))
+```
+
+## Arrange
+
+```{r}
+flights %>% arrange(year, month, day)
+
+flights %>% arrange(desc(dep_delay))
+```
+
+Note that missing values are always sorted at the end
+
+## Select
+
+```{r}
+flights %>% select(year, month, day)
+```
+
+We can specify a range of columns like this:
+
+```{r}
+flights %>% select(year:day)
+```
+
+Or exclude a range in a similar way:
+
+```{r}
+flights %>% select(-(year:day))
+```
+
+We can use a plethora of verbs inside `select`:
+
+`starts_with("abc")`: matches names that begin with “abc”.
+`ends_with("xyz")`: matches names that end with “xyz”.
+`contains("ijk")`: matches names that contain “ijk”.
+`matches("(.)\\1")`: selects variables that match a regular expression. This one matches any variables that contain repeated characters. You’ll learn more about regular expressions in strings.
+`num_range("x", 1:3)`: matches x1, x2 and x3.
+
+But we can also use the `where()` verb:
+
+```{r}
+flights %>% select(where(is.numeric))
+```
+
+We can use this to rearrange the columns in the data:
+
+```{r}
+flights %>% select(where(is.numeric), where(is.character))
+```
+
+Or we can use the `everything()` function to denote all other columns.
+
+```{r}
+flights %>% select(where(is.numeric), everything())
+```
+
+The `where` clause allows us to be more expressive:
+
+```{r}
+flights %>% select(where(~ is.numeric(.x)))
+```
+
+For reordering columns, however, there is a dedicated function:
+
+```{r}
+flights %>% relocate(c(year, month, day), .after = arr_delay)
+```
+
+We can also use the `rename()` function to change the function names:
+
+```{r}
+flights %>% rename(tail_num = tailnum)
+```
+
+## Mutate
+
+```{r}
+flights_sml <- select(flights, 
+  year:day, 
+  ends_with("delay"), 
+  distance, 
+  air_time
+)
+mutate(flights_sml,
+  gain = dep_delay - arr_delay,
+  speed = distance / air_time * 60
+)
+```
+
+We can use the `transmute` verb to keep the transformed columns only:
+
+```{r}
+transmute(flights,
+  gain = dep_delay - arr_delay,
+  hours = air_time / 60,
+  gain_per_hour = gain / hours
+)
+```
+
+## Group-by-s and summaries
+
+We can aggregate the data to get an overview with the `summarise` verb:
+
+```{r}
+summarise(flights, delay = mean(dep_delay, na.rm = TRUE))
+```
+
+But it becomes more useful when combined with `group_by`:
+
+```{r}
+flights %>%
+  group_by(year, month, day) %>%
+  summarise(delay = mean(dep_delay, na.rm = TRUE))
+```
+
+## Counts
+
+```{r}
+flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay)) %>%
+   group_by(tailnum) %>% 
+  summarise(
+    delay = mean(arr_delay)
+  ) %>%
+  ggplot(mapping = aes(x = delay)) + 
+  geom_freqpoly(binwidth = 10)
+```
+
+Wow, there are some planes that have an average delay of 5 hours (300 minutes)!
+
+The story is actually a little more nuanced. We can get more insight if we draw a scatterplot of number of flights vs. average delay:
+
+```{r}
+flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay)) %>%
+   group_by(tailnum) %>% 
+  summarise(
+    delay = mean(arr_delay, na.rm = TRUE),
+    n = n()
+  ) %>%
+  ggplot(mapping = aes(x = n, y = delay)) + 
+  geom_point(alpha = 1/10) + 
+  coord_flip()
+```
+
+Why does this happen?
+
+When doing these kind of visualisations, it is always better to filter the smallest numbers:
+
+```{r}
+flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay)) %>%
+   group_by(tailnum) %>% 
+  summarise(
+    delay = mean(arr_delay, na.rm = TRUE),
+    n = n()
+  ) %>%
+  filter(n > 25) %>% # <-- NOTE THIS
+  ggplot(mapping = aes(x = n, y = delay)) + 
+  geom_point(alpha = 1/10) +
+  coord_flip()
+```
+
+# Column-wise operations
+
+```{r}
+starwars %>% 
+  summarise(
+    species = n_distinct(species),
+    vehicles = n_distinct(vehicles),
+    starships = n_distinct(starships)
+  )
+```
+
+We could use a much more concise syntax:
+
+```{r}
+starwars %>%
+  summarise(across(where(is.character), n_distinct))
+```
+
+```{r}
+starwars %>% 
+  group_by(homeworld) %>% 
+  filter(n() > 1) %>% 
+  summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)))
+```
+
+We can also pass a list of functions:
+
+```{r}
+starwars %>% summarise(
+  across(
+    where(is.numeric),
+    list(
+      min = ~ min(.x, na.rm = TRUE),
+      max = ~ max(.x, na.rm = TRUE)
+      )
+    ),
+  )
+```
+
+And add custom naming conventions with `{glue}`:
+
+```{r}
+starwars %>% summarise(
+  across(
+    where(is.numeric),
+    list(
+      min = ~ min(.x, na.rm = TRUE),
+      max = ~ max(.x, na.rm = TRUE)
+      ),
+    .names = "{.fn}_{.col}" # or "{.col}_{.fn}"
+    ),
+  )
+```
+
+
