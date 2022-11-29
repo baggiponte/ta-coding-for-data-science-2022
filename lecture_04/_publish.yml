@@ -1,0 +1,4 @@
+- source: tidyverse_fundamentals_dplyr.qmd
+  quarto-pub:
+    - id: b7cf3fa6-afb8-498e-a2be-397ad1a55868
+      url: 'https://quartopub.com/sites/luca/tidyverse-fundamentals-dplyr'
