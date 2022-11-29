@@ -81,6 +81,63 @@ mpg %>%
 
 The aestethics specified in this way will be inherited by default in every subsequent `geom_*` (geometry). We can always override them in the `geom_*` function.
 
+# Scales
+
+`{ggplot}` also has elegant methods to change the scales of a plot:
+
+```{r}
+mpg %>% 
+  ggplot(aes(x=displ, y=hwy)) +
+  geom_point(aes(color=class, shape=drv), size=2) +
+  scale_colour_viridis_d() +
+  scale_y_log10() + 
+  labs(
+    title = "Engine displacement vs Highway consumption",
+    subtitle = "Y is in log scale",
+    y = "",
+  ) +
+  theme(
+    plot.title.position = "plot",
+    legend.position = "left"
+  )
+```
+
+To interpret the `scale_*` layers, remember the following:
+
+* The second component denotes the `geometry` or `mapping`. In this case:
+  * `scale_colour` will affect the `color`.
+  * `scale_y` will affect the scale of the `y` variable.
+* The third argument denotes the type of transformation applied:
+  * `viridis_d` denotes that the *viridis discrete* colormap is used.
+  * `log10` applies a log10 transform to the axis.
+    * Note that the axis' gridlines are scaled accordingly! Something like this would not have happened if we had transformed the `y` parameter directly. This is quite important, as it would have made interpreting the plot much more unintuitive.
+
+# Coordinate planes
+
+Here we use an example of a slightly more advanced data transformation. The `mutate` function (from the `{dplyr}` package) can apply a the same transformation to multiple columns. Instead of manually writing down every column, we can use the `across()` function. This function has a `.cols` argument and a `.fns` argument. To the first one, we pass the `where(is_character)` function: this will automatically filter out all the columns of our dataset that are of the type character. The second argument denotes the transformation we will apply to it, in this case a type conversion into factors.
+
+With a simple `+ coord_*`, we can change the coordinates of our plots:
+
+```{r}
+mpg %>% 
+  # change the column type from char to factor
+  mutate(across(.cols = where(is_character), .fns = as_factor)) %>% 
+  ggplot(aes(x=manufacturer)) +
+  geom_bar(aes(fill=drv)) +
+  scale_fill_viridis_d() +
+  coord_polar()
+
+mpg %>% 
+  # change the column type from char to factor
+  mutate(across(.cols = where(is_character), .fns = as_factor)) %>% 
+  ggplot(aes(x=manufacturer)) +
+  geom_bar(aes(fill=drv)) +
+  scale_fill_viridis_d() +
+  coord_flip()
+```
+
+While `coord_polar()` might be exotic or more niche, the `coord_flip` is an elegant solution to swap the axis of our plot. We could simply invert the `x` and `y` arguments of the `aes()` mapping, but this does not always work (e.g. with `geom_bar`, that only takes an `x` argument and computes the `y` "under the hood").
+
 # Facets
 
 the `facet_wrap()` "layer" can be used to split the plot in different *facets*.
@@ -222,3 +279,12 @@ ggstatsplot::ggbetweenstats(
 )
 ```
 
+Note how intuitive it is to obtain such complex visualisations:
+
+```{r}
+iris %>% 
+  ggplot(aes(x = Species, y = Sepal.Length)) +
+  geom_violin() +
+  geom_boxplot(alpha = 0.2) +
+  geom_jitter()
+```
