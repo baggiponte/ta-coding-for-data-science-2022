@@ -12,6 +12,7 @@ The goal of these lectures is to introduce the great R-universe, and especially 
 * [`r-best-practices`](./lecture_01/r_best_practices.qmd) [🎥](https://luca.quarto.pub/r_best_practices/#/r-best-practices). This lecture will introduce some of the most important software engineering practices when working with R (which could extend to any other programming language).
 * [`intro-to-the-tidyverse`](./lecture_02.into_to_the_tidyverse.qmd) [🎥](https://luca.quarto.pub/intro-to-the-tidyverse/). This lecture will introduce the `{tidyverse}` through Dave Robinsons' screencasts of the TidyTuesday data challenges.
 * [`tidyverse-fundamentals-ggplot`](./lecture_03/tidyverse_fundamentals_ggplot.qmd) [🎥](https://luca.quarto.pub/tidyverse-fundamentals-ggplot/). This is a more gradual approach to plotting with `{ggplot}`.
+* [`tidyverse-fundamentals-dplyr`](./lecture_04/tidyverse_fundamentals_dplyr.qmd) [🎥](https://luca.quarto.pub/tidyverse-fundamentals-dplyr/). A gradual introduction to `{dplyr}`
 
 ## References
 
