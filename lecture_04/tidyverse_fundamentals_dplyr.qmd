@@ -1,10 +1,12 @@
 ---
 title: "Tidyverse Fundamentals: `{dplyr}`"
-format: html
+format:
+  html:
+    toc: true
 cache: true
 ---
 
-# Setup 
+# Setup
 
 ```{r setup}
 #| include: FALSE
@@ -37,7 +39,7 @@ There are three other common types of variables that aren’t used in this datas
 
 # First basic `{dplyr}` verbs
 
-## filter
+## Filter
 
 ```{r}
 filter(flights, month == 1, day == 1)
@@ -49,6 +51,14 @@ For simplicity, we can use the `%>%` (pipe) operator:
 flights %>% filter(month == 11 | month == 12)
 
 flights %>% filter(month %in% c(11, 12))
+
+flights %>% filter(!is.na(dep_time))
+```
+
+To remove all missing values, we can use the following:
+
+```{r}
+flights %>% tidyr::drop_na()
 ```
 
 ## Arrange
@@ -59,7 +69,7 @@ flights %>% arrange(year, month, day)
 flights %>% arrange(desc(dep_delay))
 ```
 
-Note that missing values are always sorted at the end
+Note that missing values are always sorted at the end.
 
 ## Select
 
@@ -71,12 +81,16 @@ We can specify a range of columns like this:
 
 ```{r}
 flights %>% select(year:day)
+
+flights %>% select(1:3)
 ```
 
 Or exclude a range in a similar way:
 
 ```{r}
 flights %>% select(-(year:day))
+
+flights %>% select(-(year:day), -(5:7))
 ```
 
 We can use a plethora of verbs inside `select`:
@@ -86,6 +100,14 @@ We can use a plethora of verbs inside `select`:
 `contains("ijk")`: matches names that contain “ijk”.
 `matches("(.)\\1")`: selects variables that match a regular expression. This one matches any variables that contain repeated characters. You’ll learn more about regular expressions in strings.
 `num_range("x", 1:3)`: matches x1, x2 and x3.
+
+```{r}
+flights %>% select(starts_with("dep"))
+flights %>% select(ends_with("delay"))
+
+flights %>% select(contains("delay"))
+flights %>% select(contains(c("delay", "dep", "arr")))
+```
 
 But we can also use the `where()` verb:
 
@@ -111,10 +133,16 @@ The `where` clause allows us to be more expressive:
 flights %>% select(where(~ is.numeric(.x)))
 ```
 
+## Reordering and renaming columns
+
 For reordering columns, however, there is a dedicated function:
 
 ```{r}
-flights %>% relocate(c(year, month, day), .after = arr_delay)
+flights %>% relocate(where(is.character), .before = 1)
+flights %>% relocate(where(is.character), .before = year)
+
+flights %>% relocate(where(is.character), .after = 3)
+flights %>% relocate(where(is.character), .after = day)
 ```
 
 We can also use the `rename()` function to change the function names:
@@ -123,13 +151,21 @@ We can also use the `rename()` function to change the function names:
 flights %>% rename(tail_num = tailnum)
 ```
 
+We could technically use `select()` for renamig as well:
+
+```{r}
+flights %>% select(departure_delay = dep_delay)
+```
+
+But keep in mind that `select()` only returns the columns passed as arguments, while `rename()` returns all.
+
 ## Mutate
 
 ```{r}
-flights_sml <- select(flights, 
-  year:day, 
-  ends_with("delay"), 
-  distance, 
+flights_sml <- select(flights,
+  year:day,
+  ends_with("delay"),
+  distance,
   air_time
 )
 mutate(flights_sml,
@@ -148,7 +184,7 @@ transmute(flights,
 )
 ```
 
-## Group-by-s and summaries
+## Group-bys and summaries
 
 We can aggregate the data to get an overview with the `summarise` verb:
 
@@ -167,30 +203,30 @@ flights %>%
 ## Counts
 
 ```{r}
-flights %>% 
+flights %>%
   filter(!is.na(dep_delay), !is.na(arr_delay)) %>%
-   group_by(tailnum) %>% 
+   group_by(tailnum) %>%
   summarise(
     delay = mean(arr_delay)
   ) %>%
-  ggplot(mapping = aes(x = delay)) + 
+  ggplot(mapping = aes(x = delay)) +
   geom_freqpoly(binwidth = 10)
 ```
 
-Wow, there are some planes that have an average delay of 5 hours (300 minutes)!
+Some planes that have an average delay of 5 hours (300 minutes)!
 
 The story is actually a little more nuanced. We can get more insight if we draw a scatterplot of number of flights vs. average delay:
 
 ```{r}
-flights %>% 
+flights %>%
   filter(!is.na(dep_delay), !is.na(arr_delay)) %>%
-   group_by(tailnum) %>% 
+   group_by(tailnum) %>%
   summarise(
     delay = mean(arr_delay, na.rm = TRUE),
     n = n()
   ) %>%
-  ggplot(mapping = aes(x = n, y = delay)) + 
-  geom_point(alpha = 1/10) + 
+  ggplot(mapping = aes(x = n, y = delay)) +
+  geom_point(alpha = 1/10) +
   coord_flip()
 ```
 
@@ -199,23 +235,23 @@ Why does this happen?
 When doing these kind of visualisations, it is always better to filter the smallest numbers:
 
 ```{r}
-flights %>% 
+flights %>%
   filter(!is.na(dep_delay), !is.na(arr_delay)) %>%
-   group_by(tailnum) %>% 
+   group_by(tailnum) %>%
   summarise(
     delay = mean(arr_delay, na.rm = TRUE),
     n = n()
   ) %>%
   filter(n > 25) %>% # <-- NOTE THIS
-  ggplot(mapping = aes(x = n, y = delay)) + 
+  ggplot(mapping = aes(x = n, y = delay)) +
   geom_point(alpha = 1/10) +
   coord_flip()
 ```
 
-# Column-wise operations
+# Appendix: Column-wise operations
 
 ```{r}
-starwars %>% 
+starwars %>%
   summarise(
     species = n_distinct(species),
     vehicles = n_distinct(vehicles),
@@ -230,10 +266,34 @@ starwars %>%
   summarise(across(where(is.character), n_distinct))
 ```
 
+And we can chain multiple summaries:
+
 ```{r}
-starwars %>% 
-  group_by(homeworld) %>% 
-  filter(n() > 1) %>% 
+starwars %>% summarise(
+  across(where(is.numeric), mean), # but maybe we want to change this
+  across(where(is.character), n_distinct),
+  across(where(is.list), n_distinct),
+  )
+```
+
+In this way, however, we will still get the undesirable default behaviour of `mean()` (which returns `NA` if there are `NA` values in the sample).
+To pass an argument to a function inside `across()`, we can use the `~` formula notation.
+
+```{r}
+starwars %>% summarise(
+  across(where(is.numeric), ~ min(.x, na.rm = TRUE)),
+  across(where(is.character), n_distinct),
+  across(where(is.list), n_distinct),
+  )
+```
+
+Here, `.x` denotes a placeholder for the data. These pipelines are usually more useful after a groupby operation:
+
+
+```{r}
+starwars %>%
+  group_by(homeworld) %>%
+  filter(n() > 1) %>%
   summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)))
 ```
 
@@ -266,4 +326,211 @@ starwars %>% summarise(
   )
 ```
 
+Or relocate the columns afterwards:
 
+```{r}
+starwars %>% summarise(
+  across(
+    where(is.numeric),
+    .fns = list(
+      min = ~ min(.x, na.rm = TRUE),
+      max = ~ max(.x, na.rm = TRUE)
+    ),
+    .names = "{.fn}_{.col}"
+  ),
+) %>%
+  relocate(starts_with("min"), .before = 1)
+```
+
+Of course, the list of functions can be stored as a variable outside the pipeline.
+
+```{r}
+functions_list <- list(
+      min = ~ min(.x, na.rm = TRUE),
+      max = ~ max(.x, na.rm = TRUE)
+    )
+
+starwars %>% summarise(
+  across(
+    where(is.numeric),
+    .fns = functions_list,
+    .names = "{.fn}_{.col}"
+  ),
+) %>%
+  relocate(starts_with("min"), .before = 1)
+```
+
+As a side note, `count()` is a wrapper around `. %>% groupby %>% summarise(.x = count(.x))`
+
+```{r}
+flights %>%
+  count(year, month, day, origin)
+```
+
+# Appendix: A `{tidyr}` detour
+
+Some of the more common data operations require dropping, imputing or replacing missing values.
+Some other times you might want to separate or unite two columns (e.g. extract the prefix from a phone number),
+or expand a dataframe to include all possible combinations of values. The functions to perform these operations are built in `{tidyr}`,
+which is shipped by default in the `{tidyverse}`.
+
+## Extracting from columns
+
+The functions `extract()` `separate()` and `unite()` are in charge of this behaviour. By default, they split using any non-alphanumeric value:
+
+```{r}
+tibble(x = c(NA, "x.y", "x.z", "y.z")) %>%
+  extract(x, "A")
+
+tibble(x = c(NA, "x.y", "x.z", "y.z")) %>%
+  extract(x, c("A", "B"), "([a-z]+).([a-z]+)")
+```
+
+These are useful, but require knowing a bit of regex patterns.
+
+The `separate()` function is a nice wrapper around `extract()`:
+
+```{r}
+tibble(x = c(NA, "x.y", "x.z", "y.z")) %>%
+  separate(x, c("A", "B"))
+```
+
+And has a lot of advanced use cases. `separate_rows()` creates a new row for each observation:
+
+```{r}
+tbl <- tibble(
+  x = 1:3,
+  y = c("a", "d,e,f", "g,h"),
+  z = c("1", "2,3,4", "5,6")
+)
+
+tbl
+
+tbl %>%
+  separate_rows(y, z, convert = TRUE) #convert will perform type conversion
+```
+
+Uniting column has some use cases:
+
+```{r}
+flights %>% unite(date, year, month, day) # the first column is the new colname
+```
+
+But when working with dates it might be better to use dedicated packages
+(more on this below):
+
+```{r}
+flights %>% transmute(date = lubridate::make_date(year, month, day))
+
+flights %>% transmute(date = clock::date_build(year, month, day))
+```
+
+This is an advanced case of completing sequences with datetime objects. The base case is:
+
+```{r}
+full_seq(c(1, 10), 1)
+```
+
+## Combine values
+
+```{r}
+fruits <- tibble(
+  type   = c("apple", "mandarin", "apple", "mandarin", "mandarin", "mandarin"),
+  color = c("red", "orange", "red", "orange", "orange", "orange"),
+  year   = c(2010, 2010, 2012, 2010, 2011, 2012),
+  size  =  factor(
+    c("XS", "S",  "M", "S", "S", "M"),
+    levels = c("XS", "S", "M", "L")
+  ),
+  weights = rnorm(6, as.numeric(size) + 2)
+)
+
+fruits
+
+fruits %>% select(type, size)
+```
+
+Note that the levels of `size` are `XS, S, M, L` and that `L` does **not** appear in the data.
+
+If we expand the `type` and `size` columns, all combinations of all levels will appear.
+
+```{r}
+fruits %>% expand(type, size)
+```
+
+We use `nesting()` to perform the expansion only with the values that appear (i.e., the missing levels won't be used!):
+
+```{r}
+fruits %>% expand(type, nesting(size))
+```
+
+## Expand and complete grids
+
+The `{clock}` and `{lubridate}` packages have functions to create datetime ranges:
+
+```{r}
+start = as.Date("2010-01-01")
+end = as.Date("2010-01-31")
+
+clock::date_seq(from = start, to = end, by=1)
+clock::date_seq(from = start, by = 1, total_size = 31)
+```
+
+We can use these to create grids:
+
+```{r}
+expand_grid(
+  date = clock::date_seq(from = start, by = 1, total_size = 31),
+  from = c("Duomo", "Centrale FS", "Garibaldi FS"),
+)
+```
+
+The functions above are useful, but to use them with a dataset we need to use some functions to join and possibly replace missing values. Fortunately for us, the `complete` is a wrapper around `expand` and other join functions to simplify the interface:
+
+```{r}
+fruits %>% complete(type, size, year)
+```
+
+But we can also use a group-by, which will return the full table (with missing values).
+
+```{r}
+fruits %>% group_by(type) %>% complete(size, year)
+```
+
+To fill the `NA`s, we can use an `ifelse` or `case_when` statement for qualitative/categorical variables:
+
+```{r}
+fruits %>%
+  group_by(type) %>%
+  complete(size, year) %>%
+  mutate(
+    color = ifelse(type == "apple", "red", "orange"),
+  )
+
+fruits %>%
+  group_by(type) %>%
+  complete(size, year) %>%
+  arrange(type, year) %>%
+  mutate(
+    color = case_when(
+      type == "apple" ~ "red",
+      TRUE ~ "orange" # this denotes "every other case"
+    )
+  )
+```
+
+The `case_when` statement is longer, but is useful when there are multiple options. Note that the `mutate` verb was used and replaced the values that were already present. It would be more optimal to use other functions, such as `replace_na` and `fill`. In case of quantitative variables, perhaps a case statement matched with a custom function can help.
+
+```{r}
+fruits %>%
+  group_by(type) %>%
+  complete(size, year) %>%
+  arrange(type, year) %>%
+  fill(color, .direction = "updown") # "downup" is equivalent in this case
+```
+
+# Advanced topics
+
+* How to work with factors using `{forcats}` and with dates using `{lubridate}` or `{clock}`
+* Explore window functions in [`{dplyr}`](https://dplyr.tidyverse.org/articles/window-functions.html)
+* Functional programming with `{purr}`
