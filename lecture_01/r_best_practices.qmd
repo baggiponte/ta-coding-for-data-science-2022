@@ -3,27 +3,27 @@ title: "💯 R Best Practices"
 subtitle: How to set up a reproducible and collaborative workflow
 title-slide-attributes:
   data-background-color: "lightblue"
-footer: UniMi • [Coding for Data Science and Data Management](https://www.unimi.it/en/education/degree-programme-courses/2023/coding-data-science-and-data-management) • AY 2022/2023 
+footer: UniMi • [Coding for Data Science and Data Management](https://www.unimi.it/en/education/degree-programme-courses/2023/coding-data-science-and-data-management) • AY 2022/2023
 format:
   revealjs:
-    theme: simple 
+    theme: simple
     incremental: true
 ---
 
 # Index
 
-* 🚧 Project Configuration 
+* 🚧 Project Configuration
 * ✨ Tips and Tricks
 * ♻️ Reproducible Workflow
-* 🌐 Follow Standards 
+* 🌐 Follow Standards
 
-# 🚧 Project Configuration 
+# 🚧 Project Configuration
 Code smells, projects and scaffolding
 
 ## 🚧 Project Configuration
-### 🚩 Dont's 
+### 🚩 Dont's
 
-. . . 
+. . .
 
 ```{.r}
 rm(list = ls())
@@ -75,7 +75,7 @@ This effectively means that you have to re-run your code! But you can also use c
 ::::
 
 ## 🚧 Project Configuration
-### 🚩 Dont's 
+### 🚩 Dont's
 
 `setwd("/Users/jenny/cuddly_broccoli/verbose_funicular/foofy/data")`
 
@@ -123,7 +123,7 @@ df <- read.delim(here("data", "raw_foofy_data.csv"))
 p <- ggplot(df, aes(x, y)) + geom_point()
 
 # saves to `./figs/foofy_scatterplot.png`
-ggsave(here("figs", "foofy_scatterplot.png"))         
+ggsave(here("figs", "foofy_scatterplot.png"))
 ```
 
 ## 🚧 Project Configuration
@@ -200,7 +200,7 @@ Avoid `/` and `\` for file names especially!
       │  ├── processed      # final data used for analysis/models
       │  └── raw            # raw data should never change!
       ├── reports           # notebooks with analysis and exploration
-      ├── src               # contains the source code, also named `R` 
+      ├── src               # contains the source code, also named `R`
       ├── your-proj.Rproj   # ❗Project file
       └── README.md         # info about the project
 ```
@@ -230,7 +230,7 @@ help('as.data.frame')
 
 * You can see all the installed vignettes with `browseVignettes()` and view one with `vignette('your-vignette')`.
 
-# ♻️ Reproducible Workflow 
+# ♻️ Reproducible Workflow
 Use `{renv}` to create and manage virtual environments
 
 ## ♻️ Reproducible Workflow
@@ -252,9 +252,9 @@ code into (starting from specific package versions).
       details about every library you use).
 4. Keep installing packages with `install.packages()` (which is actually calling `renv::install()` under the hood).
 
-# 🌐Follow Standards 
+# 🌐Follow Standards
 
-## 🌐Follow Standards 
+## 🌐Follow Standards
 ### 🔍 Linting
 
 -   Use [`{lintr}`](https://github.com/r-lib/lintr) as a *static analysis tool*:
@@ -265,7 +265,7 @@ code into (starting from specific package versions).
 
 * It also enforces the [*tidyverse style guide*](https://style.tidyverse.org/) 👀
 
-## 🌐Follow Standards 
+## 🌐Follow Standards
 ### 🪄 Formatters
 
 * Use [`{styler}`](https://github.com/r-lib/styler)
@@ -274,7 +274,7 @@ code into (starting from specific package versions).
 
 ![ ](https://raw.githubusercontent.com/lorenzwalthert/some_raw_data/master/styler_0.1.gif)
 
-## 🌐Follow Standards 
+## 🌐Follow Standards
 ### 🪄 Formatters
 
 * If you are using `git` (you should) and GitHub, you can use **GitHub Actions**

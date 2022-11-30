@@ -3,7 +3,7 @@ title: "Intro to the Tidyverse"
 format:
   html:
     toc: true
-execute: 
+execute:
   cache: true
 ---
 
@@ -112,7 +112,7 @@ speed_index %>%
 
 ```{r}
 ribbon_plot <- function(data, title) {
-  data %>% 
+  data %>%
     ggplot(aes(date, p50, color= client, fill=client)) +
     geom_line() +
     geom_ribbon(aes(ymin=p25, ymax=p75), alpha=0.2) +
@@ -122,8 +122,8 @@ ribbon_plot <- function(data, title) {
       y="",
     ) +
     theme(plot.title.position = 'plot')
-} 
-  
+}
+
 ally_scores %>% ribbon_plot(title="Accessibility Scores")
 
 bytes_total %>% ribbon_plot(title="Total bytes")
@@ -166,7 +166,7 @@ combined_percentiles %>% count(measure)
 ```
 
 ```{r}
-combined_percentiles %>% 
+combined_percentiles %>%
   ggplot(aes(date, p50, fill=client, color=client)) +
   geom_line() +
   geom_ribbon(aes(ymin=p25, ymax=p50), alpha=0.2) +
@@ -180,7 +180,7 @@ combined_percentiles %>%
 ```
 
 ```{r}
-bind_rows(image_alt, color_contrast) %>% 
+bind_rows(image_alt, color_contrast) %>%
   ggplot(aes(percent)) +
   geom_density(aes(fill=client), alpha=0.3, color="white") +
   facet_wrap(~ measure, scales="free") +
@@ -197,4 +197,3 @@ bind_rows(image_alt, color_contrast) %>%
     plot.subtitle = ggtext::element_markdown(),
   )
 ```
-

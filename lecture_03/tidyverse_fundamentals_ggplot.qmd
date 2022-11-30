@@ -3,7 +3,7 @@ title: "Tidyverse Fundamentals: `{ggplot}`"
 format:
   html:
     toc: true
-execute: 
+execute:
   cache: true
 ---
 
@@ -66,7 +66,7 @@ mpg %>%
   ggplot() +
   geom_point(mapping = aes(x = displ, y = hwy))
 
-mpg |> 
+mpg |>
   ggplot() +
   geom_point(mapping = aes(x = displ, y = hwy))
 ```
@@ -88,11 +88,11 @@ The aestethics specified in this way will be inherited by default in every subse
 `{ggplot}` also has elegant methods to change the scales of a plot:
 
 ```{r}
-mpg %>% 
+mpg %>%
   ggplot(aes(x=displ, y=hwy)) +
   geom_point(aes(color=class, shape=drv), size=2) +
   scale_colour_viridis_d() +
-  scale_y_log10() + 
+  scale_y_log10() +
   labs(
     title = "Engine displacement vs Highway consumption",
     subtitle = "Y is in log scale",
@@ -121,17 +121,17 @@ Here we use an example of a slightly more advanced data transformation. The `mut
 With a simple `+ coord_*`, we can change the coordinates of our plots:
 
 ```{r}
-mpg %>% 
+mpg %>%
   # change the column type from char to factor
-  mutate(across(.cols = where(is_character), .fns = as_factor)) %>% 
+  mutate(across(.cols = where(is_character), .fns = as_factor)) %>%
   ggplot(aes(x=manufacturer)) +
   geom_bar(aes(fill=drv)) +
   scale_fill_viridis_d() +
   coord_polar()
 
-mpg %>% 
+mpg %>%
   # change the column type from char to factor
-  mutate(across(.cols = where(is_character), .fns = as_factor)) %>% 
+  mutate(across(.cols = where(is_character), .fns = as_factor)) %>%
   ggplot(aes(x=manufacturer)) +
   geom_bar(aes(fill=drv)) +
   scale_fill_viridis_d() +
@@ -147,16 +147,16 @@ the `facet_wrap()` "layer" can be used to split the plot in different *facets*.
 > The first argument of `facet_wrap()` should be a formula, which you create with `~` followed by a variable name (here “formula” is the name of a data structure in R, not a synonym for “equation”). The variable that you pass to `facet_wrap()` should be discrete.
 
 ```{r facet-wrap}
-ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy)) + 
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
   facet_wrap(~ class, nrow = 2)
 ```
 
 You can also create a grid, to facet the plot on the combination of two variables:
 
 ```{r facet-grid}
-ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy)) + 
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
   facet_grid(drv ~ cyl)
 ```
 
@@ -167,12 +167,12 @@ The `geom` attribute describes the *data representation*. Here we use a small ex
 ```{r geoms}
 library(patchwork)
 
-p1 <- ggplot(data = mpg) + 
+p1 <- ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = hwy)) +
-  labs(title = "Scatterplot") + 
+  labs(title = "Scatterplot") +
   theme(plot.title.position = "plot")
 
-p2 <- ggplot(data = mpg) + 
+p2 <- ggplot(data = mpg) +
   geom_smooth(mapping = aes(x = displ, y = hwy)) +
   labs(title = "Smooth Regression Line") +
   theme(plot.title.position = "plot")
@@ -192,7 +192,7 @@ p2a <- ggplot(data = mpg) +
     subtitle = "By type of drive train (no color)"
   ) +
   theme(plot.title.position = "plot")
-    
+
 p2b <- ggplot(data = mpg) +
   geom_smooth(
     mapping = aes(x = displ, y = hwy, color = drv),
@@ -210,8 +210,8 @@ p2a | p2b
 We can also layer them:
 
 ```{r}
-mpg %>% 
-  ggplot(mapping = aes(x = displ, y = hwy)) + 
+mpg %>%
+  ggplot(mapping = aes(x = displ, y = hwy)) +
   geom_point() +
   geom_smooth() +
   labs(
@@ -223,8 +223,8 @@ mpg %>%
 In this case, setting a "global" mapping can help remove code duplication. We can still set custom aesthetics for each layer:
 
 ```{r}
-mpg %>% 
-  ggplot(mapping = aes(x = displ, y = hwy)) + 
+mpg %>%
+  ggplot(mapping = aes(x = displ, y = hwy)) +
   geom_point(aes(color=class)) +
   geom_smooth() +
   labs(
@@ -236,8 +236,8 @@ mpg %>%
 We can also change the **data** in each layer:
 
 ```{r}
-ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
-  geom_point(mapping = aes(color = class)) + 
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
+  geom_point(mapping = aes(color = class)) +
   geom_smooth(data = mpg %>% filter(class == "subcompact"), se = FALSE) +
   labs(
     title = "Smooth regression line + scatterplot",
@@ -261,12 +261,12 @@ library(see)
 
 mpg %>%
   # turn columns into factors
-  mutate(across(where(is.character), as_factor)) %>% 
+  mutate(across(where(is.character), as_factor)) %>%
   # fit a regression model
-  lm(hwy ~ manufacturer + year + cyl + fl + class, data = .) %>% 
-  parameters() %>% 
+  lm(hwy ~ manufacturer + year + cyl + fl + class, data = .) %>%
+  parameters() %>%
   plot() +
-  ggplot2::labs(title = "A Dot-and-Whisker Plot") + 
+  ggplot2::labs(title = "A Dot-and-Whisker Plot") +
   ggsci::scale_color_npg()
 ```
 
@@ -284,7 +284,7 @@ ggstatsplot::ggbetweenstats(
 Note how intuitive it is to obtain such complex visualisations:
 
 ```{r}
-iris %>% 
+iris %>%
   ggplot(aes(x = Species, y = Sepal.Length)) +
   geom_violin() +
   geom_boxplot(alpha = 0.2) +
