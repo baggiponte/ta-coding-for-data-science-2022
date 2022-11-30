@@ -1,10 +1,5 @@
 # Coding for Data Science 2022-2023
 
-<!-- badges: start -->
-[![lint](https://github.com/baggiponte/coding-for-data-science/actions/workflows/lint.yaml/badge.svg)](https://github.com/baggiponte/coding-for-data-science/actions/workflows/lint.yaml)
-[![style](https://github.com/baggiponte/coding-for-data-science/actions/workflows/style.yaml/badge.svg)](https://github.com/baggiponte/coding-for-data-science/actions/workflows/style.yaml)
-<!-- badges: end -->
-
 The goal of these lectures is to introduce the great R-universe, and especially the `{tidyverse}`. This not only means displaying the packages, but also the great community that makes R so alive: the plethora of open source and open access resources, the live casts, and the extensive set of tools to create websites, publications and presentations.
 
 ## Contents
