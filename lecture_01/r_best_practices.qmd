@@ -12,13 +12,10 @@ format:
 
 # Index
 
-## 🚧 Project Configuration 
-
-## ✨Tips and Tricks
-
-## ♻️ Reproducible Workflow
-
-## 🌐Follow Standards 
+* 🚧 Project Configuration 
+* ✨ Tips and Tricks
+* ♻️ Reproducible Workflow
+* 🌐 Follow Standards 
 
 # 🚧 Project Configuration 
 Code smells, projects and scaffolding

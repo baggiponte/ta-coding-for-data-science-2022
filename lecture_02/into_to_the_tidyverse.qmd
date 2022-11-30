@@ -1,6 +1,8 @@
 ---
 title: "Intro to the Tidyverse"
-output: html_document
+format:
+  html:
+    toc: true
 execute: 
   cache: true
 ---

@@ -1,6 +1,8 @@
 ---
 title: "Tidyverse Fundamentals: `{ggplot}`"
-output: html_document
+format:
+  html:
+    toc: true
 execute: 
   cache: true
 ---

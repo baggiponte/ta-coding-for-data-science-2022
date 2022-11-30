@@ -2,3 +2,7 @@
   quarto-pub:
     - id: 2e59c28c-ea64-4a40-b1a9-aebc6e82272f
       url: 'https://quartopub.com/sites/luca/intro-to-the-tidyverse'
+- source: into_to_the_tidyverse.qmd
+  quarto-pub:
+    - id: 03f3a0c8-c9f8-4192-be77-c3638c5069e1
+      url: 'https://quartopub.com/sites/luca/intro-to-the-tidyverse'
