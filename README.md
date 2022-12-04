@@ -11,20 +11,31 @@ The goal of these lectures is to introduce the great R-universe, and especially 
 
 ## References
 
-### Lecture 1
+### Lecture 1: R Best Practices
 
 * [What They Forgot to Teach You About R](https://rstats.wtf)
 * [Stat 545](https://stat545.com/index.html)
 
-### Lecture 2
+### Lecture 2: Introduction to the Tidyverse
 
 * [Dave Robinson Channel](https://www.youtube.com/user/safe4democracy)
 * [R for Data Science (community)](https://www.rfordatasci.com/)
 
-### Lecture 3
+### Lecture 3: Intro to `{ggplot2}`
 
 * [R for Data Science (book)](https://r4ds.hadley.nz/) by Hadley Wickham and Garret Grolemund
+* [ggplot2: Elegant Graphics for Data Analysis](https://ggplot2-book.org/) by Hadley Wickham
+
+### Lecture 3: Intro to `{dplyr}`
+
+* [R for Data Science (book)](https://r4ds.hadley.nz/) by Hadley Wickham and Garret Grolemund
+* `{tidyr}`s [documentation](https://tidyr.tidyverse.org/reference/index.html)
+
+### Lecture 5: Intro to Object Oriented Programming in R
+
+* [Advanced R](https://adv-r.hadley.nz/index.html) by Hadley Wickham.
 
 ###  Extras
 
 * [Happy Git and GitHub for the useR](https://happygitwithr.com)
+* Package development in R: [R Packages (2nd Edition)](https://r-pkgs.org/introduction.html)
