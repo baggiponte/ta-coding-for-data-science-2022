@@ -1,0 +1,426 @@
+---
+title: Object Oriented Programming in R
+format:
+  html:
+    toc: true
+execute:
+  cache: true
+---
+
+Object Oriented Programming (OOP) is a programming paradigm that is based on the concept of "objects" that contain both data and methods for manipulating that data.
+OOP is a popular programming paradigm in many languages, including R, and it can be a powerful tool for organizing and managing complex code.
+
+> The main reason to use OOP is polymorphism (literally: many shapes). Polymorphism means that a developer can consider a function’s interface separately from its implementation, making it possible to use the same function form for different types of input. This is closely related to the idea of encapsulation: the user doesn’t need to worry about details of an object because they are encapsulated behind a standard interface.
+
+# OOP in R
+
+There are two main paradigms of object-oriented programming which differ in how methods and classes are related:
+
+* In **encapsulated** OOP, methods belong to objects or classes, and method calls typically look like `object.method(arg1, arg2)`. This is called encapsulated because the object encapsulates both data (with fields) and behaviour (with methods), and is the paradigm found in most popular languages.
+* In **functional** OOP, methods belong to generic functions, and method calls look like ordinary function calls: `generic(object, arg2, arg3)`. This is called functional because from the outside it looks like a regular function call, and internally the components are also functions.
+
+Base R provides three OOP systems: `S3`, `S4`, and reference classes (`RC`):
+
+* `S3` is R’s first OOP system, and is an informal implementation of functional OOP and relies on common conventions rather than ironclad guarantees. This makes it easy to get started with, providing a low cost way of solving many simple problems.
+* `S4` is a formal and rigorous rewrite of `S3`. It requires more upfront work than `S3`, but in return provides more guarantees and greater encapsulation. `S4` is implemented in the base `{methods}` package, which is always installed with R.
+* `RC` implements encapsulated OO. `RC` objects are a special type of `S4` objects that are also mutable, i.e., instead of using R’s usual copy-on-modify semantics, they can be modified in place. This makes them harder to reason about, but allows them to solve problems that are difficult to solve in the functional OOP style of `S3` and `S4`.
+
+Some OOP systems are also provided as CRAN packages. Most notably, `R6` implements encapsulated OOP like `RC`.
+
+# What are objects in R?
+
+Of course, everything in R is an object - but not in the OOP sense. We can use the [`base::is.object`](https://rdrr.io/r/base/is.object.html) function to see whether the object has a `"class"` attribute. This is (a kind of) shorthand for using `base::attr(1:10, "class")` or `base::attr(mtcars, "class")`.
+
+```{r}
+# a base object
+is.object(1:10)
+
+# An OO object
+is.object(mtcars)
+```
+
+However, since it just returns `TRUE` or `FALSE`, that might not be super useful. Enter the `{sloop}` package:
+
+```{r}
+library(sloop)
+
+otype(1:10)
+otype(mtcars)
+```
+
+While *only* OO-objects have a `"class"` attribute, *every* object has a `type`. These types are defined within `R` and can only be added/modified by the R Core Team.
+
+# Attributes
+
+Before moving on to `S3` objects, it is useful to review attributes in R. This is because `S3` objects feature a unique attribute, called `class`. We can set attributes arbitrarily with `base::attr`:
+
+```{r}
+a <- 1:3
+attr(a, "x") <- "abcdef"
+attr(a, "x")
+
+attr(a, "y") <- 4:6
+str(attributes(a))
+```
+
+Or, equivalently
+
+```{r}
+a <- structure(
+  1:3,
+  x = "abcdef",
+  y = 4:6
+)
+
+str(attributes(a))
+```
+
+Some known examples of attributes are `names` and `dims`:
+
+```{r}
+# by direct assignment
+x <- c(a = 1, b = 2, c = 3)
+
+# or separately
+x <- 1:3
+names(x) <- c("a", "b", "c")
+```
+
+# `S3`
+
+> `S3`is R’s first and simplest OO system. `S3`is informal and ad hoc, but there is a certain elegance in its minimalism: you can’t take away any part of it and still have a useful OO system. For these reasons, you should use it, unless you have a compelling reason to do otherwise. `S3` is the only OO system used in the base and stats packages, and it’s the most commonly used system in CRAN packages.
+
+## Anatomy of an `S3` object
+
+An `S3` object is a base type with at least a `class` attribute. The `factor`, for example:
+
+* has `integer` as base type,
+* has `factor` as `class` attribute, and
+* a `level` attribute to store the levels.
+
+```{r}
+f <- factor(c("a", "b", "c"))
+
+typeof(f)
+attributes(f)
+```
+
+An `S3` object behaves differently from its underlying base type whenever it’s passed to a **generic** (short for generic function). The easiest way to tell if a function is a generic is to use `sloop::ftype()` and look for “generic” in the output:
+
+```{r}
+library(sloop)
+
+ftype(print)
+ftype(str)
+```
+
+> A generic function defines an interface, which uses a different implementation depending on the class of an argument (almost always the first argument).
+
+```{r}
+print(f)
+
+print(unclass(f))
+```
+
+`unclass()` is a special function (that is a `primitive` and not a generic: see the output of `ftype(unclass)`) that strips away the `class` attribute of a `S3` object.
+
+You can use `sloop::s3_dispatch` to inspect all the *methods*/*implementations* of a generic functions:
+
+```{r}
+s3_dispatch(print(f))
+```
+
+The `print` generic has a `print.factor` method. You should never call the method directly, but instead rely on the generic to find it for you - i.e., let the dispatched do the work.
+
+We can see the implementation details of a method with `sloop::s3_get_method`.
+
+## Initialise a class in `S3`
+
+To define a class with `S3`, there is no reserved way such as Python's `class MyClass`. Instead, it is enough to set the `class` attribute.
+
+```{r}
+x <- structure(list(), class = "my_class")
+```
+
+And we can use `class(x)` to inspect the class. Since no formal way to define a class is provided, it is up to us to define a **class constructor**. One of the best practices is to define one called `new_myclass()` where `myclass` is your class name.
+
+This `new_*` function will be mainly used by the developer. As an example, let's reimplement the `Date` class:
+
+```{r}
+new_date <- function(x = double()) {
+  stopifnot(is.double(x))
+  structure(x, class = "Date")
+}
+
+new_date(c(-1, 0, 1))
+```
+
+These `new_*` function can be less comprehensive and "safe" compared to proper constructors. This is because they are meant to be used frequently during development. On the other hand, we can also define **validator functions** to ensure that the correct attributes are passed. These can (should) be used within the **helper function**, named `myclass` that will be used by the end-user. These helper functions must have informative error messages, sensitive default values and call the `new_myclass` constructor at the end:
+
+```r
+myclass <- function(x) {
+  validate_myclass(x)
+  new_myclass(x)
+}
+```
+
+## Generics and methods in `S3`
+
+Let's create a student class:
+
+```{r}
+new_student <- function(name, age) {
+  structure(list(name = name, age = age), class = "Student")
+}
+
+validate_student <- function(name, age) {
+  stopifnot(is.character(name))
+  stopifnot(is.double(age))
+}
+
+student <- function(name, age) {
+  validate_student(name, age)
+  new_student(name, age)
+}
+
+andrew <- student(name = "Andrew", age = 25)
+```
+
+We can inspects its attributes (also called *fields*) with the `$` accessor:
+
+```{r}
+andrew$name
+andrew$age
+```
+
+We can define a generic function `greet`:
+
+```{r}
+greet <- function(person) {
+  UseMethod("greet")
+}
+
+greet.Student <- function(person) {
+  cat("Hello", person$name)
+}
+
+greet(andrew)
+```
+
+In this way we created a new method for the generic `greet`. We could use `greet.Student()` too, but the `UseMethod` does the job of dispatching to the correct type for us.
+
+Let's also create a new class and a new method for `greet`:
+
+```{r}
+new_prof <- function(name, age) {
+  structure(list(name = name, age = age), class = "Prof")
+}
+
+validate_prof <- function(name, age) {
+  stopifnot(is.character(name))
+  stopifnot(is.double(age))
+}
+
+prof <- function(name, age) {
+  validate_prof(name, age)
+  new_prof(name, age)
+}
+
+max <- prof(name = "Max", age = 25)
+```
+
+We can easily add a new method:
+
+
+```{r}
+greet.Prof <- function(prof) {
+  cat("Good day,", prof$name)
+}
+```
+
+And to see them in action:
+
+
+```{r}
+greet(andrew)
+greet(max)
+```
+
+## `S3`: Advanced concepts
+
+* [Inheritance](https://adv-r.hadley.nz/s3.html#s3-inheritance)
+* [Dispatch details](https://adv-r.hadley.nz/s3.html#s3-dispatch)
+
+# `R6`
+
+`R6` is available as a package, so make sure you install it in case if you don't have it available:
+
+```r
+install.packages('R6')
+```
+
+```{r}
+library(R6)
+```
+
+`R6` OO object use the same 'encapsulation' paradigm of `S3` objects (unlike `S4`). As Hadley Wicham puts it:
+
+> If you’ve learned OOP in another programming language, it’s likely that `R6` will feel very natural, and you’ll be inclined to prefer it over `S3`.
+Resist the temptation to follow the path of least resistance: in most cases `R6` will lead you to non-idiomatic R code.
+
+## Define a new class in `R6`
+
+`R6` classes follow a more concise template:
+
+```r
+MyClass <- R6Class("MyClass",
+  list(
+    ...
+  )
+)
+```
+
+Where the `list()` argument contains attributes and methods. We can access them with the `self$attribute` or `self$method()`:
+
+```{r}
+Accumulator <- R6Class("Accumulator", list(
+  sum = 0,
+  add = function(x = 1) {
+    self$sum <- self$sum + x
+    invisible(self)
+  })
+)
+
+Accumulator
+```
+
+(Keep in mind the `invisible()` function for a moment, we shall talk about that in a bit).
+To instantiate a new object of the class we use `MyClass$new()`:
+
+```{r}
+acc <- Accumulator$new()
+
+acc$add(4)
+acc$sum
+```
+
+### `invisible` return value
+
+To ensure **method chaining**, functions that have *side effects* (i.e., which modify the internal data/state of the object) should always return `self`, but *silently*. With this, we can write the following:
+
+```{r}
+acc$
+  add(10)$
+  add(10)$
+  sum
+```
+
+### Important methods
+
+Much alike `__init__()`, we can define a `$initialize` method to override the default behaviour of `$new`, and `$print` behaves like `__repr__()`, and should return a `invisible(self)`. We can also implement a `$validate` to ensure the arguments are checked.
+
+## Extras
+
+### Defining private methods and attributes
+
+Unlike Python (where *every* method/attribute is public, even though conventions are in place to denote fields that should not be touched), with `R6` we can define private attributes and methods of a class. We can simply add a `private` field, that will be an instance of `list()`.
+
+As a side note: this means that the fields defined after the class name are silently assigned to `public`. In other words:
+
+```{r}
+SecretAgent <- R6::R6Class("SecretAgent",
+  public = list(
+    validate = function(name, age) {
+      stopifnot(is.numeric(age))
+      stopifnot(is.character(name))
+    },
+    initialize = function(name, age = NA) {
+      self$validate(name, age)
+      private$name <- name
+      private$age <- age
+    },
+    print = function(...) {
+      cat("SecretAgent: \n")
+      cat("  Name: ", private$name, "\n")
+      cat("  Age: ", private$age, "\n")
+    }
+  ),
+  private = list(
+    age = NA,
+    name = NULL
+  )
+)
+```
+
+We cannot access any private field: not even `$private` itself:
+
+```{r}
+# these are capital "o", not 0s
+OO7 <- SecretAgent$new("James Bond", 47)
+
+OO7$name
+OO7$age
+
+OO7$private
+OO7$private$name
+
+OO7$print()
+```
+
+### Active fields
+
+These are attributes - i.e., are called like `self$attr` - even though they are defined with functions. Much alike private methods, active fields are defined within the `active = list(...)` argument of the class.
+
+## Adding methods outside the class definition
+
+We can add a new method anytime by using the default `$set` method:
+
+```{r}
+Accumulator <- R6Class("Accumulator")
+Accumulator$set("public", "sum", 0)
+Accumulator$set("public", "add", function(x = 1) {
+  self$sum <- self$sum + x
+  invisible(self)
+})
+```
+
+And we can use the `inherit` attribute to provide the parent class. Much like Python, we can access the methods defined in the parent with `super$`.
+
+## `R6` and `S3`
+
+Every R object has an `S3` class - this means we can use `class()` to obtain information about its class
+
+```{r}
+class(acc)
+names(acc)
+```
+
+## Reference semantics
+
+Let's go back to the accumulator: what will happen if we assign a new instance of `Accumulator` to another class?
+
+```{r}
+acc2 <- Accumulator$new()
+acc3 <- acc2
+
+acc2$add(10)
+
+c(acc2 = acc2$sum, acc3= acc3$sum)
+```
+
+The two `acc2` and `acc3` actually refer to the **same object**. To create a copy, we need to use the `$copy()` method:
+
+```{r}
+acc2 <- Accumulator$new()
+acc3 <- acc2$clone()
+
+acc2$add(10)
+
+c(acc2 = acc2$sum, acc3 = acc3$sum)
+```
+
+# Further resources
+
+* [`S4` and functional OOP in R](https://adv-r.hadley.nz/s4.html)
+* Another `S4` [tutorial](https://www.datacamp.com/tutorial/r-objects-and-classes)
+* [`R6` vs `RC`](https://adv-r.hadley.nz/r6.html#why-r6)
