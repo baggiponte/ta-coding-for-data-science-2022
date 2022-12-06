@@ -1,0 +1,4 @@
+- source: intro_to_oop_in_r.qmd
+  quarto-pub:
+    - id: 8ab7d10d-2bfa-4f64-8d7b-5d9b586ce956
+      url: 'https://quartopub.com/sites/luca/object-oriented-programming-in-r'
